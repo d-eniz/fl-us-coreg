@@ -54,7 +54,7 @@ depth_corrected = 1 - max(depth_corrected) + depth_corrected; % shift so that ma
 FL_image = createFLcmap(depth_corrected, "jet");
 FL_image = imresize(FL_image, [size(US_data, 1), size(US_data, 2)]);
 
-%% Plotting for fun
+%% Plotting
 
 x_axis = dx:dx:scan_length;
 
