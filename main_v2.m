@@ -11,7 +11,8 @@ visibility = 50; % new setting, helps a lot with visibility
 
 %% Setup
 
-addpath(fileparts(mfilename('fullpath')));
+addpath("C:\Users\Deniz\Desktop\data");
+addpath("funcs\")
 US_data = H5toUS(fname);
 FL_data = H5toFL(fname);
 scan_depth = h5readatt(fname, '/', 'depth_mm');
