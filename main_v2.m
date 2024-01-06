@@ -9,14 +9,17 @@ addpath("funcs\")
 threshold = 100;
 visibility = 50; % new setting, helps a lot with visibility
 
-data_folder = "C:\Users\Deniz\Desktop\data";
-addpath(data_folder);
-fileList = dir(fullfile(data_folder, "*.h5"));
+[fileList, pathname] = uigetfile("*.h5", "Select files", "MultiSelect", "on");
+addpath(pathname)
 
 %% Start loop to process all files in folder
 
 for i = 1:length(fileList)
-    currentFile = fullfile(data_folder, fileList(i).name);
+    if isa(fileList,'cell')
+        currentFile = fileList(i);
+    else
+        currentFile = fileList;
+    end
     [~, name, format] = fileparts(char(currentFile));
     fname = [name, format];
 
@@ -75,7 +78,7 @@ FL_image = imresize(FL_image, [size(US_data, 1), size(US_data, 2)]);
 x_axis = dx:dx:scan_length;
 y_axis = dy:dy:scan_depth;
 
-data_plots = figure;
+data_plots = figure('visible','off');
 subplot(2,2,1);
 sgtitle(fname)
     plot(x_axis, depth_corrected)
@@ -114,7 +117,7 @@ subplot(2,2,4)
 
 %% Coregistration
 
-coregistered_img = figure;
+coregistered_img = figure('visible','off');
     imagesc(x_axis, y_axis, US_data)
     hold on
     colormap gray
