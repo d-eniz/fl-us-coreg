@@ -3,9 +3,9 @@ close all
 
 %% Settings
 
-fname = ["water45int100.h5"]; % file name
+fname = ["water30int20.h5"]; % file name
 
-angle = 0; % if known, no impact on image processing
+angle = 0; % add if known, no impact on image processing
 threshold = 100;
 visibility = 50; % new setting, helps a lot with visibility
 
@@ -18,6 +18,7 @@ FL_data = H5toFL(fname);
 scan_depth = h5readatt(fname, '/', 'depth_mm');
 scan_length = h5readatt(fname, '/', 'length_mm'); % scan length in mm
 dx = h5readatt(fname, '/', 'dx'); % step size between the A-lines
+dy = scan_depth / size(US_data, 1);
 
 %% Finding surface layer
 
@@ -57,33 +58,53 @@ FL_image = imresize(FL_image, [size(US_data, 1), size(US_data, 2)]);
 %% Plotting
 
 x_axis = dx:dx:scan_length;
+y_axis = dy:dy:scan_depth;
 
-figure;
+figure("WindowState","maximized");
 subplot(2,2,1);
-plot(x_axis, depth_corrected)
-title("Fluorescence, depth corrected")
-ylim([0 1])
+    plot(x_axis, depth_corrected)
+    title("Fluorescence, depth corrected")
+    ylim([0 1])
+    xlabel("Distance (cm)"),
+    ylabel("Fluorescence (AU)")
+    axis tight
 subplot(2,2,3);
-scatter(x_axis, FL_data,".")
-title("Fluorescence, experimental vs model")
-hold on
-scatter(x_axis, FL_processed,".")
-hold off
-legend("Exp", "Model")
+    scatter(depth, FL_data,".")
+    title("Fluorescence, experimental vs model")
+    hold on
+    scatter(depth, FL_processed,".")
+    hold off
+    legend("Exp", "Model")
+    xlabel("Depth (cm)"),
+    ylabel("Fluorescence (AU)")
+    axis tight
 subplot(2,2,2);
-imagesc(FL_image)
-title("Fluorescence, depth corrected (colormap)")
-colorbar
+    imagesc(FL_image)
+    title("Fluorescence, depth corrected (colormap)")
+    colorbar
+    axis tight
 subplot(2,2,4)
-plot(x_axis, depth)
-title("Detected surface (" + angle + " degrees)")
+    plot(x_axis, depth)
+    set ( gca, 'ydir', 'reverse' )
+    title("Detected surface")
+    xlabel("Distance (cm)"),
+    ylabel("Depth (cm)")
+    axis tight
 
 %% Coregistration
 
-figure
-imagesc(US_data)
-hold on
-colormap gray
-FL = imagesc(FL_image);
-selection = US_data .* uint8(peakPos);
-set(FL, 'AlphaData', selection);
+figure("WindowState","maximized");
+    imagesc(x_axis, y_axis, US_data)
+    hold on
+    colormap gray
+    FL = imagesc(x_axis, y_axis, FL_image);
+    colorbar
+    selection = US_data .* uint8(peakPos);
+    set(FL, 'AlphaData', selection);
+    title("Depth-corrected FL data over US image")
+    subtitle(fname)
+    xlabel("Distance (cm)"),
+    ylabel("Depth (cm)")
+    axis equal
+    axis tight
+%}
