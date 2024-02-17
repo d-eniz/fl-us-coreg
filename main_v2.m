@@ -6,15 +6,23 @@ addpath("funcs\")
 
 %% Settings
 
-threshold = 100;
+threshold = 85;
 visibility = 50; % new setting, helps a lot with visibility
 
 [fileList, pathname] = uigetfile("*.h5", "Select files", "MultiSelect", "on");
+if pathname == 0
+    error("Choose files to proceed")
+end
 addpath(pathname)
 
 %% Start loop to process all files in folder
+if isa(fileList,'cell')
+    num_files = length(fileList);
+else
+    num_files = 1;
+end
 
-for i = 1:length(fileList)
+for i = 1:num_files
     if isa(fileList,'cell')
         currentFile = fileList(i);
     else
@@ -25,16 +33,21 @@ for i = 1:length(fileList)
 
 %% Setup
 
+attributes = H5att(fname);
+load('attributes.mat');
 US_data = H5toUS(fname);
 FL_data = H5toFL(fname);
-scan_depth = h5readatt(fname, '/', 'depth_mm');
-scan_length = h5readatt(fname, '/', 'length_mm'); % scan length in mm
-dx = h5readatt(fname, '/', 'dx'); % step size between the A-lines
-dy = scan_depth / size(US_data, 1);
+dy = depth_mm / size(US_data, 1);
+[data_rows, data_cols] = size(US_data);
+
+%% Interpolate FL data to fit to US image for scans with different resolutions
+
+factor = data_cols / length(FL_data);
+query = linspace(1, length(FL_data), length(FL_data) * factor);% points to be interpolated
+FL_data = interp1(FL_data, query);
 
 %% Finding surface layer
 
-[data_rows, data_cols] = size(US_data);
 peakPos = zeros(data_rows, data_cols);
 for col = 1:data_cols
     peakFound = false;
@@ -55,7 +68,7 @@ for col = 1:size(peakPos, 2)
         depth(col) = row_index;
     end
 end
-depth = (depth .* scan_depth) ./ size(US_data, 1); % add dimensions
+depth = (depth .* depth_mm) ./ size(US_data, 1); % add dimensions
 
 %% Fluorescence depth correction
 
@@ -75,8 +88,8 @@ FL_image = imresize(FL_image, [size(US_data, 1), size(US_data, 2)]);
 
 %% Plotting
 
-x_axis = dx:dx:scan_length;
-y_axis = dy:dy:scan_depth;
+x_axis = dx:dx:length_mm;
+y_axis = dy:dy:depth_mm;
 
 data_plots = figure('visible','off');
 subplot(2,2,1);
@@ -92,13 +105,13 @@ sgtitle(fname)
     xlabel("Distance (cm)"),
     ylabel("Fluorescence (AU)")
 subplot(2,2,3);
-    scatter(depth, FL_data,".")
+    scatter(x_axis, FL_data,".")
     title("Fluorescence, experimental vs model")
     hold on
-    scatter(depth, FL_processed,".")
+    scatter(x_axis, FL_processed,".")
     hold off
     legend("Exp", "Model")
-    xlabel("Depth (cm)"),
+    xlabel("Distance (cm)"),
     ylabel("Fluorescence (AU)")
     axis tight
 subplot(2,2,2);
@@ -113,12 +126,10 @@ subplot(2,2,4)
     xlabel("Distance (cm)"),
     ylabel("Depth (cm)")
     axis equal
-    axis tight
-
 %% Coregistration
 
 coregistered_img = figure('visible','off');
-    imagesc(x_axis, y_axis, US_data)
+    imagesc(x_axis, y_axis, US_data);
     hold on
     colormap gray
     FL = imagesc(x_axis, y_axis, FL_image);
@@ -149,5 +160,4 @@ close all
 
 end % Image processing loop end
 disp("All images saved")
-
 %}
