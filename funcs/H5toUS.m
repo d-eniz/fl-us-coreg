@@ -23,4 +23,4 @@ close(f);
 data(data<(-35+max(CA))) = -35+max(CA);
 data(data>(0+max(CA))) = 0+max(CA);
 
-data = uint8(255 * mat2gray(data)); % deniz's addition for compatibility
+data = uint8(255 * mat2gray(data));
