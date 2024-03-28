@@ -1,13 +1,13 @@
 %% Initialize
 
-clear
-close all
+clear; close all;
 addpath("funcs\")
 
 %% Settings
 
-threshold = 85;
-visibility = 50; % new setting, helps a lot with visibility
+threshold = 70;
+visibility = 100;
+gain = 10;
 
 [fileList, pathname] = uigetfile("*.h5", "Select files", "MultiSelect", "on");
 if pathname == 0
@@ -32,11 +32,11 @@ for i = 1:num_files
     fname = [name, format];
 
 %% Setup
-
+disp("Processing " + fname + " at T:" + threshold + " V:" + visibility)
 attributes = H5att(fname);
 load('attributes.mat');
 US_data = H5toUS(fname);
-FL_data = H5toFL(fname);
+[FL_data, boundary, fyy] = H5toFL(fname);
 dy = depth_mm / size(US_data, 1);
 [data_rows, data_cols] = size(US_data);
 
@@ -72,16 +72,14 @@ depth = (depth .* depth_mm) ./ size(US_data, 1); % add dimensions
 
 %% Fluorescence depth correction
 
-FL_processed = richardFL(depth); % richard's method - works generally well
-%FL_processed = denizFL(depth); % my (old) method, doesn't work at all but
-% i kept it because it's useful to demonstrate a bad example
+FL_processed = modelFluorescence(depth);
 
-% This part is about displaying how much the experimental data deviates
-% from the model values calculated using depth data. I will experiment on
-% which mode to use to display this deviation.
-depth_corrected = sqrt((FL_data - FL_processed).^2);
-depth_corrected = 0.5 - mean(depth_corrected) + depth_corrected; % shift median to 0.5
-%depth_corrected = 1 - max(depth_corrected) + depth_corrected; % shift max to 1
+FL_processed = rescale(FL_processed, boundary(1), boundary(2));
+FL_processed = FL_processed./fyy;
+
+depth_corrected = FL_data - FL_processed;
+depth_corrected = depth_corrected .* gain;
+depth_corrected = 0.5 - mean(depth_corrected) + depth_corrected;
 
 FL_image = createFLcmap(depth_corrected, "jet");
 FL_image = imresize(FL_image, [size(US_data, 1), size(US_data, 2)]);
@@ -91,9 +89,23 @@ FL_image = imresize(FL_image, [size(US_data, 1), size(US_data, 2)]);
 x_axis = dx:dx:length_mm;
 y_axis = dy:dy:depth_mm;
 
-data_plots = figure('visible','off');
-subplot(2,2,1);
-sgtitle(fname)
+figs = figure('Position', [50 50 1200 500],'visible','off');
+
+subplot(2,4,[1, 2, 5, 6])
+    imagesc(x_axis, y_axis, US_data);
+    hold on
+    colormap gray
+    FL = imagesc(x_axis, y_axis, FL_image);
+    %colorbar
+    selection = US_data .* uint8(peakPos);
+    set(FL, 'AlphaData', selection);
+    title("Depth-corrected FL data over US image")
+    xlabel("Distance (mm)"),
+    ylabel("Depth (mm)")
+    axis equal
+    axis tight
+subplot(2,4,3);
+sgtitle("File: " + fname + ", Threshold: " + threshold + ", Visibility: " + visibility, " Gain:" + gain)
     plot(x_axis, depth_corrected)
     xlim("tight")
     if max(depth_corrected) > 1
@@ -102,62 +114,33 @@ sgtitle(fname)
         ylim([0 1])
     end
     title("Fluorescence, depth corrected")
-    xlabel("Distance (cm)"),
+    xlabel("Distance (mm)"),
     ylabel("Fluorescence (AU)")
-subplot(2,2,3);
+subplot(2,4,7);
     scatter(x_axis, FL_data,".")
     title("Fluorescence, experimental vs model")
     hold on
     scatter(x_axis, FL_processed,".")
     hold off
     legend("Exp", "Model")
-    xlabel("Distance (cm)"),
+    xlabel("Distance (mm)"),
     ylabel("Fluorescence (AU)")
     axis tight
-subplot(2,2,2);
+subplot(2,4,4);
     imagesc(FL_image)
     title("Colormap")
-    colorbar
     axis tight
-subplot(2,2,4)
+    axis off
+subplot(2,4,8)
     plot(x_axis, depth)
     set ( gca, 'ydir', 'reverse' )
     title("Detected surface")
-    xlabel("Distance (cm)"),
-    ylabel("Depth (cm)")
+    xlabel("Distance (mm)"),
+    ylabel("Depth (mm)")
     axis equal
-%% Coregistration
 
-coregistered_img = figure('visible','off');
-    imagesc(x_axis, y_axis, US_data);
-    hold on
-    colormap gray
-    FL = imagesc(x_axis, y_axis, FL_image);
-    colorbar
-    selection = US_data .* uint8(peakPos);
-    set(FL, 'AlphaData', selection);
-    title("Depth-corrected FL data over US image")
-    subtitle(fname)
-    xlabel("Distance (cm)"),
-    ylabel("Depth (cm)")
-    axis equal
-    axis tight
-
-%% Save images
-
-if ~exist("processed_images", "dir")
-    mkdir("processed_images");
+fname = fullfile("processed_images", name + "t" + threshold + "v" + visibility + "g" + gain + ".png");
+exportgraphics(figs, fname, "Resolution", 300)
+disp("Image saved at " + fname)
 end
-filename = fullfile("processed_images", name + "_data_plots_t" + threshold + "v" + visibility + ".png");
-saveas(data_plots, filename, "png");
-disp("Image saved at: " + filename);
-filename = fullfile("processed_images", name + "_coregistered_img_t" + threshold + "v" + visibility + ".png");
-saveas(coregistered_img, filename, "png");
-disp("Image saved at: " + filename);
-
-clf
-close all
-
-end % Image processing loop end
 disp("All images saved")
-%}
