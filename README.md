@@ -12,7 +12,7 @@ The project introduces a MATLAB-based application that enables the coregistratio
 - Coregistration & Visualization: Overlays fluorescence data on OpUS images without compromising anatomical context.
 - Graphical User Interface (GUI): A MATLAB-based GUI enables easy configuration and visualization of coregistered images.
 
-![alt text](https://github.com/d-eniz/fl-us-coreg/images/ui.PNG "ui")
+![alt text](https://raw.githubusercontent.com/d-eniz/fl-us-coreg/refs/heads/main/images/ui.PNG "ui")
 
 ## Installation
 MATLAB Requirements: The code is compatible with MATLAB R2023b or later.
@@ -51,18 +51,18 @@ The coregistration tool workflow involves the following key steps:
 - Depth Correction: Corrects fluorescence data for depth using a custom model based on OpUS surface information.
 - Visualization: Overlays depth-corrected fluorescence data on OpUS images for a clear display of dysplastic regions.
 
-![alt text](https://github.com/d-eniz/fl-us-coreg/images/chart.PNG "chart")
+![alt text](https://raw.githubusercontent.com/d-eniz/fl-us-coreg/refs/heads/main/images/chart.PNG "chart")
 
 ## Results
 Here is an example of coregistered OpUS/fluorescence images from the tool:
 
 Simple geometric targets (e.g., angled fluorescent plates)
-![alt text](https://github.com/d-eniz/fl-us-coreg/images/1.PNG "1")
-![alt text](https://github.com/d-eniz/fl-us-coreg/images/2.PNG "2")
+![alt text](https://raw.githubusercontent.com/d-eniz/fl-us-coreg/refs/heads/main/images/1.PNG "1")
+![alt text](https://raw.githubusercontent.com/d-eniz/fl-us-coreg/refs/heads/main/images/2.PNG "2")
 
 Complex biological targets (e.g., swine oesophagus with fluorescent markers)
-![alt text](https://github.com/d-eniz/fl-us-coreg/images/3.PNG "3")
-![alt text](https://github.com/d-eniz/fl-us-coreg/images/4.PNG "4")
+![alt text](https://raw.githubusercontent.com/d-eniz/fl-us-coreg/refs/heads/main/images/3.PNG "3")
+![alt text](https://raw.githubusercontent.com/d-eniz/fl-us-coreg/refs/heads/main/images/4.PNG "4")
 
 ## License and Usage
 This project is shared strictly for showcasing and informational purposes. Use of the code, modification, or distribution without explicit permission from the author is not allowed.
